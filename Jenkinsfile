@@ -1,45 +1,58 @@
 pipeline {
     agent { label "Jenkins-Agent" }
+
     environment {
-              APP_NAME = "register-app-pipeline"
+        APP_NAME  = "register-app-pipeline"
+        IMAGE_TAG = "1.0.0-${BUILD_NUMBER}"   
+        GIT_REPO  = "gitops-register-app"
+        GIT_BRANCH = "main"
     }
 
     stages {
+
         stage("Cleanup Workspace") {
             steps {
                 cleanWs()
             }
         }
 
-        stage("Checkout from SCM") {
-               steps {
-                   git branch: 'master', credentialsId: 'github-cred', url: 'https://github.com/pratyush934/gitops-register-app'
-               }
+        stage("Checkout GitOps Repo") {
+            steps {
+                git branch: "${GIT_BRANCH}",
+                    credentialsId: 'github-cred',
+                    url: "https://github.com/pratyush934/${GIT_REPO}.git"
+            }
         }
 
-        stage("Update the Deployment Tags") {
+        stage("Update Deployment Image Tag") {
             steps {
                 sh """
-                   cat deployment.yaml
-                   sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' deployment.yaml
-                   cat deployment.yaml
+                  echo "Before update:"
+                  cat deployment.yaml
+
+                  sed -i 's|image: ${APP_NAME}:.*|image: ${APP_NAME}:${IMAGE_TAG}|' deployment.yaml
+
+                  echo "After update:"
+                  cat deployment.yaml
                 """
             }
         }
 
-        stage("Push the changed deployment file to Git") {
+        stage("Commit & Push Changes") {
             steps {
                 sh """
-                   git config --global user.name "pratyush934"
-                   git config --global user.email "pratyushsinha982@gmail.com"
-                   git add deployment.yaml
-                   git commit -m "Updated Deployment Manifest"
+                  git config user.name "pratyush934"
+                  git config user.email "pratyushsinha982@gmail.com"
+                  git add deployment.yaml
+                  git commit -m "chore: update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
                 """
+
                 withCredentials([gitUsernamePassword(credentialsId: 'github-cred', gitToolName: 'Default')]) {
-                  sh "git push https://github.com/pratyush934/gitops-register-app main"
+                    sh """
+                      git push origin ${GIT_BRANCH}
+                    """
                 }
             }
         }
-      
     }
 }
