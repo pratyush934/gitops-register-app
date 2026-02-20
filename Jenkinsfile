@@ -28,9 +28,9 @@ pipeline {
                 sh """
                   echo "Before update:"
                   cat deployment.yaml
-
-                  sed -i 's|image: ${APP_NAME}:.*|image: ${APP_NAME}:${IMAGE_TAG}|' deployment.yaml
-
+        
+                  sed -i 's|image: .*${APP_NAME}:.*|image: pratyush934/${APP_NAME}:${IMAGE_TAG}|' deployment.yaml
+        
                   echo "After update:"
                   cat deployment.yaml
                 """
