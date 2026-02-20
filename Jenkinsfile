@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         APP_NAME  = "register-app-pipeline"
-        IMAGE_TAG = "1.0.0-${BUILD_NUMBER}"   
         GIT_REPO  = "gitops-register-app"
         GIT_BRANCH = "main"
     }
